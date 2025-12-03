@@ -1,0 +1,70 @@
+describe('Validação da Tela de Cadastro - Fire Alert', () => {
+  
+  beforeEach(() => {
+
+    cy.visit('http://127.0.0.1:5500/cadastro.html');
+  });
+
+  //  Validação 1: Campos obrigatórios
+  it('validacao1_camposObrigatorios', () => {
+    cy.get('#registerForm').submit();
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.equal('Preencha todos os campos!');
+    });
+  });
+
+  //  Validação 2: Senhas diferentes
+  it('validacao2_senhasNaoCoincidem', () => {
+    cy.get('#name').type('Usuário Teste');
+    cy.get('#email').type('teste@firealert.com');
+    cy.get('#password').type('Senha@123');
+    cy.get('#confirmPassword').type('SenhaErrada');
+    cy.get('#registerForm').submit();
+
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.equal('As senhas não coincidem!');
+    });
+  });
+
+  //  Validação 3: Senha fraca
+  it('validacao3_senhaFraca', () => {
+    cy.get('#name').type('Usuário Teste');
+    cy.get('#email').type('teste@firealert.com');
+    cy.get('#password').type('12345');
+    cy.get('#confirmPassword').type('12345');
+    cy.get('#registerForm').submit();
+
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.contain('Senha fraca!');
+    });
+  });
+
+  // Validação 4: E-mail inválido
+  it('validacao4_emailInvalido', () => {
+    cy.get('#name').type('Usuário Teste');
+    cy.get('#email').type('emailinvalido'); 
+    cy.get('#password').type('Senha@123');
+    cy.get('#confirmPassword').type('Senha@123');
+    cy.get('#registerForm').submit();
+
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.equal('E-mail inválido!');
+    });
+  });
+
+  // Validação 5: Cadastro bem-sucedido
+  it('validacao5_cadastroSucesso', () => {
+    cy.get('#name').type('Usuário Teste');
+    cy.get('#email').type('teste@firealert.com');
+    cy.get('#password').type('Senha@123');
+    cy.get('#confirmPassword').type('Senha@123');
+    cy.get('#registerForm').submit();
+
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.equal('Usuário Usuário Teste cadastrado com sucesso!');
+    });
+
+    cy.url().should('include', 'login.html');
+  });
+
+});

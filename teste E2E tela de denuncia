@@ -1,0 +1,95 @@
+describe('Denúncia - validações de formulário e upload', () => {
+  beforeEach(() => {
+    cy.visit('http://127.0.0.1:5500/denuncia.html');
+  });
+
+  // Validação 1: Campos obrigatórios
+  it('validacao1_camposObrigatorios', () => {
+    cy.get('#denunciaForm').submit();
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.equal('Por favor, preencha todos os campos!');
+    });
+  });
+
+  // Validação 2: Upload de imagem gera pré-visualização
+  it('validacao2_uploadImagemPreview', () => {
+    const base64Png =
+      'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAADUlEQVR4nGP4z8DwHwAGvwKXQm0C5QAAAABJRU5ErkJggg==';
+
+    cy.get('#imagem').selectFile(
+      {
+        contents: Cypress.Buffer.from(base64Png, 'base64'),
+        fileName: 'teste.png',
+        mimeType: 'image/png'
+      },
+      { force: true }
+    );
+
+    cy.get('#preview img').should('exist').and('have.attr', 'alt', 'Pré-visualização da imagem');
+    cy.get('#preview').should('have.attr', 'data-ready', 'true');
+  });
+
+  // Validação 3: Envio com sucesso
+  it('validacao3_envioDenunciaSucesso', () => {
+    cy.get('#endereco').type('Rua das Flores, 123');
+    cy.get('#descricao').type('Incêndio próximo ao parque.');
+    cy.get('#denunciaForm').submit();
+
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.equal('✅ Denúncia enviada com sucesso! Obrigado por colaborar com o Fire Alert.');
+    });
+
+    cy.get('#endereco').should('have.value', '');
+    cy.get('#descricao').should('have.value', '');
+    cy.get('#preview').should('be.empty');
+  });
+
+  // Validação 4: Upload de arquivo inválido
+  it('validacao4_uploadArquivoInvalido', () => {
+    cy.get('#imagem').selectFile(
+      {
+        contents: Cypress.Buffer.from('conteudo de texto', 'utf8'),
+        fileName: 'teste.txt',
+        mimeType: 'text/plain'
+      },
+      { force: true }
+    );
+    cy.get('#mensagemErro').should('contain.text', 'Arquivo inválido');
+  });
+
+  // Validação 5: Reset limpa preview (preenche obrigatórios antes de enviar)
+  it('validacao5_resetLimpaPreview', () => {
+    const base64Png =
+      'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAADUlEQVR4nGP4z8DwHwAGvwKXQm0C5QAAAABJRU5ErkJggg==';
+
+    // Faz upload para criar preview
+    cy.get('#imagem').selectFile(
+      {
+        contents: Cypress.Buffer.from(base64Png, 'base64'),
+        fileName: 'teste.png',
+        mimeType: 'image/png'
+      },
+      { force: true }
+    );
+    cy.get('#preview img').should('exist');
+
+    // Preenche campos obrigatórios para permitir o submit
+    cy.get('#endereco').type('Av. Principal, 456');
+    cy.get('#descricao').type('Fumaça densa visível na área.');
+
+    // Envia e valida alerta de sucesso
+    cy.get('#denunciaForm').submit();
+    cy.on('window:alert', (msg) => {
+      expect(msg).to.equal('✅ Denúncia enviada com sucesso! Obrigado por colaborar com o Fire Alert.');
+
+    });
+
+
+    cy.get('#preview').should('be.empty');
+  });
+
+  // Validação 6: Navegação - link Denúncia ativo
+  it('validacao6_linkDenunciaAtivo', () => {
+    cy.get('nav').contains('Denúncia').should('exist');
+  });
+});
